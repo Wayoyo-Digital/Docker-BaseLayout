@@ -21,7 +21,7 @@ else
 fi
 
 # Install macchina using cargo
-if ! cargo install macchina; then
+if ! cargo install macchina --root /usr/local; then
     echo "Failed to install macchina." >&2
     exit 1
 else    
