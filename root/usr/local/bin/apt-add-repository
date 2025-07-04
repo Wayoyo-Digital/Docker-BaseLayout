@@ -1,0 +1,13 @@
+#!/bin/sh
+
+: '
+This script is owned by webdevops and licensed under the MIT License.
+It adds a repository to the system using add-apt-repository.
+'
+
+set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable
+set -o errexit   ## set -e : exit the script if any statement returns a non-true return value
+
+apt-install software-properties-common
+add-apt-repository $@
+apt-get purge -y -f software-properties-common
