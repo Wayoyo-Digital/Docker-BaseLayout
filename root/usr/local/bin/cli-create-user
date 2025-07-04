@@ -1,32 +1,42 @@
 #!/bin/bash
 
-set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable
-set -o errexit   ## set -e : exit the script if any statement returns a non-true return value
+set -o nounset   # set -u: exit the script if you try to use an uninitialized variable
+set -o errexit   # set -e: exit the script if any statement returns a non-true return value
 
-# Change the username from 'ubuntu' to 'application'
-usermod -l application ubuntu
+: "${APPLICATION_USER:=application}"
+: "${APPLICATION_PATH:=/app}"
 
-# Change the group name from 'ubuntu' to 'application' if necessary
-groupmod -n application ubuntu
+# Change the username from 'ubuntu' to $APPLICATION_USER
+usermod -l "$APPLICATION_USER" ubuntu
 
-# Change the home directory to /home/application and move its contents
-usermod -d /home/application -m application
+# Change the group name from 'ubuntu' to $APPLICATION_USER if necessary
+groupmod -n "$APPLICATION_USER" ubuntu
 
-# Replace 'ubuntu' with 'application' in /etc/passwd
-sed -i 's/ubuntu/application/g' /etc/passwd
+# Change the home directory to /home/$APPLICATION_USER and move its contents
+usermod -d "/home/$APPLICATION_USER" -m "$APPLICATION_USER"
 
-# Replace 'ubuntu' with 'application' in /etc/group
-sed -i 's/ubuntu/application/g' /etc/group
+# Replace 'ubuntu' with $APPLICATION_USER in /etc/passwd
+sed -i "s/ubuntu/$APPLICATION_USER/g" /etc/passwd
 
-# Replace 'ubuntu' with 'application' in /etc/shadow
-sed -i 's/ubuntu/application/g' /etc/shadow
+# Replace 'ubuntu' with $APPLICATION_USER in /etc/group
+sed -i "s/ubuntu/$APPLICATION_USER/g" /etc/group
 
-# Use gosu to run commands as root
+# Replace 'ubuntu' with $APPLICATION_USER in /etc/shadow
+sed -i "s/ubuntu/$APPLICATION_USER/g" /etc/shadow
+
+# Create the APPLICATION_PATH directory (in addition to the home directory) and set ownership
+mkdir -p "/home/$APPLICATION_USER"
+chown "$APPLICATION_USER:$APPLICATION_USER" "/home/$APPLICATION_USER"
+
+mkdir -p "$APPLICATION_PATH"
+chown "$APPLICATION_USER:$APPLICATION_USER" "$APPLICATION_PATH"
+
+# Use gosu to execute commands as root
 gosu root bash -c "
-    # Ensure the 'application' user can use sudo without a password
-    echo 'application ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/application
-    chmod 0440 /etc/sudoers.d/application
+    # Ensure that the user '$APPLICATION_USER' can use sudo without a password
+    echo '$APPLICATION_USER ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/$APPLICATION_USER
+    chmod 0440 /etc/sudoers.d/$APPLICATION_USER
 "
 
-# Switch to the 'application' user
-exec gosu application bash
+# Switch to the $APPLICATION_USER user
+exec gosu "$APPLICATION_USER" bash
