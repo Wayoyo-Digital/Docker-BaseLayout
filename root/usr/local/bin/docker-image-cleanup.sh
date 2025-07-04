@@ -1,0 +1,42 @@
+#!/bin/sh
+
+: '
+# This script is owned by webdevops and licensed under the MIT License.
+# It cleans up the container environment by removing temporary files and caches.
+# Supports Debian, RedHat, Alpine, and Arch-based distributions.
+'
+
+set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable
+set -o errexit   ## set -e : exit the script if any statement returns a non-true return value
+
+LSB_FAMILY=$(docker-image-info family)
+
+case "$LSB_FAMILY" in
+    Debian)
+        rm -f /tmp/.apt-update
+        apt-get autoremove -y -f
+        apt-get clean -y
+        rm -rf /var/lib/apt/lists/*
+        ;;
+
+    RedHat)
+        yum autoremove --assumeyes
+        yum clean all
+        ;;
+
+    Alpine)
+        find /var/lib/apk/ -mindepth 1 -delete
+        ;;
+
+    Arch)
+        pacman -Sc
+        ;;
+
+    *)
+        echo "ERROR: Distribution $LSB_FAMILY not supported"
+        exit 1
+        ;;
+esac
+
+find /tmp/ /var/log/ -mindepth 1 -delete
+rm -rf /root/.cache
