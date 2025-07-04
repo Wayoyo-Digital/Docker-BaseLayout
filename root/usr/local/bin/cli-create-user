@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable
+set -o errexit   ## set -e : exit the script if any statement returns a non-true return value
+
+# Check if the group already exists, if not, create it
+if ! getent group "$APPLICATION_GROUP" > /dev/null; then
+    groupadd -g "$APPLICATION_GID" "$APPLICATION_GROUP"
+fi
+
+# Verifica si el usuario ya existe, si no, lo crea
+if ! id -u "$APPLICATION_USER" > /dev/null 2>&1; then
+    useradd -m -u "$APPLICATION_UID" -g "$APPLICATION_GROUP" -d "$APPLICATION_PATH" "$APPLICATION_USER"
+fi
